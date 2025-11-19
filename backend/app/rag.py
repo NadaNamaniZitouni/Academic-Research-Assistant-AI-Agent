@@ -72,11 +72,20 @@ def retrieve_chunks(
     return chunks
 
 
-def format_context_for_llm(chunks: List[Dict]) -> str:
-    """Format retrieved chunks as context for LLM"""
+def format_context_for_llm(chunks: List[Dict], max_chunk_length: int = 800) -> str:
+    """
+    Format retrieved chunks as context for LLM.
+    Limits chunk text length to prevent prompt truncation while providing sufficient context.
+    Default max_chunk_length=800 provides good balance between context and token limits.
+    """
     context_parts = []
     for i, chunk in enumerate(chunks, 1):
+        # Truncate chunk text if too long to prevent token limit issues
+        chunk_text = chunk['text']
+        if len(chunk_text) > max_chunk_length:
+            chunk_text = chunk_text[:max_chunk_length] + "..."
+        
         source = f"[{chunk['doc_title']}, p{chunk['page_start']}-{chunk['page_end']}]"
-        context_parts.append(f"Source {i} {source}:\n{chunk['text']}\n")
+        context_parts.append(f"Source {i} {source}:\n{chunk_text}\n")
     return "\n".join(context_parts)
 

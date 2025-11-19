@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 
 class QueryRequest(BaseModel):
     query: str
-    k: int = 5
+    k: int = 8  # Default to 8 chunks for better context coverage
 
 
 class SourceResponse(BaseModel):

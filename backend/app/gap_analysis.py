@@ -26,28 +26,29 @@ def identify_research_gaps(
         for p in related_papers[:5]  # Top 5
     ])
 
-    # Create prompt
+    # Create optimized prompt for gap analysis - shorter and more structured
     prompt_template = PromptTemplate(
         input_variables=["answer", "related_papers", "question"],
-        template="""You are a research analyst. Based on the following answer to a research question and the related literature, identify 3-5 research gaps and suggest potential experimental approaches.
+        template="""You are a research analyst. Identify 3-5 specific research gaps.
 
-Question: {question}
+QUESTION: {question}
+ANSWER: {answer}
+LITERATURE: {related_papers}
 
-Answer: {answer}
+TASK: List gaps with descriptions and approaches.
 
-Related Literature:
-{related_papers}
+FORMAT (exactly):
+Gap 1:
+Description: [1-2 sentences]
+Approach: [1-2 sentences]
 
-Identify research gaps (areas not fully addressed) and suggest:
-1. What questions remain unanswered?
-2. What methodological approaches could address these gaps?
-3. What experiments or studies would be valuable?
+Gap 2:
+Description: [1-2 sentences]
+Approach: [1-2 sentences]
 
-Format your response as a numbered list of gaps, each with:
-- Gap description
-- Suggested approach/experiment
+[Continue for 3-5 gaps]
 
-Be specific and actionable.
+Be specific and actionable. Focus on researchable gaps.
 """
     )
 

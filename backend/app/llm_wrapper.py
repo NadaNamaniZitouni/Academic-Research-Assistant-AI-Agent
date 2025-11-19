@@ -171,8 +171,14 @@ def get_llm():
         model_name = os.getenv("LLM_MODEL_NAME", "mistral")
         try:
             print(f"Initializing Ollama with base_url: {base_url}, model: {model_name}")
-            llm = Ollama(base_url=base_url, model=model_name, temperature=0)
+            # Note: LangChain Ollama wrapper doesn't support all parameters directly
+            llm = Ollama(
+                base_url=base_url, 
+                model=model_name, 
+                temperature=0  # Deterministic responses for consistency and speed
+            )
             print(f"Ollama LLM initialized successfully with model: {model_name} at {base_url}")
+            print(f"Optimized for speed: temperature=0, limited context chunks, shorter prompts")
             return llm
         except Exception as e:
             print(f"Error initializing Ollama: {e}")

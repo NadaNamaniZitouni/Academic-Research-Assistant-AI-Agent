@@ -42,20 +42,31 @@ def answer_with_rag(
     if not chunks:
         return "No relevant content found in the uploaded documents to answer this question."
 
-    # Format context
-    context = format_context_for_llm(chunks)
+    # Format context with reasonable limits to balance quality and speed
+    # Use top 8 chunks and allow up to 800 chars per chunk for comprehensive context
+    limited_chunks = chunks[:8]  # Use top 8 chunks for better coverage
+    context = format_context_for_llm(chunks, max_chunk_length=800)
 
-    # Create prompt
+    # Create optimized prompt for better responses
     prompt_template = PromptTemplate(
         input_variables=["context", "question"],
-        template="""You are a research assistant. Use the following context from academic papers to answer the question. Include citations in the format [Source Title, pX-Y] where appropriate.
+        template="""You are an expert academic research assistant. Your task is to provide clear, accurate, and well-cited answers based on the provided research context.
 
-Context:
+CONTEXT FROM RESEARCH DOCUMENTS:
 {context}
 
-Question: {question}
+USER QUESTION: {question}
 
-Answer concisely and accurately, citing sources where you use information from them. If the context doesn't contain enough information to answer the question, say so.
+INSTRUCTIONS:
+1. Analyze the context carefully and identify the most relevant information
+2. Provide a comprehensive but concise answer (aim for 150-300 words)
+3. Include citations in the format [Document Title, pX-Y] for every claim or fact you reference
+4. If multiple sources support the same point, cite all relevant sources
+5. If the context doesn't contain enough information, clearly state what is missing
+6. Structure your answer with clear paragraphs
+7. Be specific and avoid vague statements
+
+ANSWER:
 """
     )
 
@@ -112,7 +123,7 @@ Answer concisely and accurately, citing sources where you use information from t
 def full_rag_pipeline(
     question: str,
     db: Session,
-    k: int = 5
+    k: int = 8
 ) -> Dict:
     """
     Complete RAG pipeline: retrieve, answer, find related papers, identify gaps.

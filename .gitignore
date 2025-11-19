@@ -57,20 +57,6 @@ htmlcov/
 ./DOCKER.md
 ./docker-compose.prod.yml
 ./docker-compose.gpu.yml
-./docker-start.sh
-./docker-start.bat
-./docker-stop.sh
-./docker-stop.bat
-./docker-restart.sh
-./docker-restart.bat
-./docker-logs.sh
-./docker-logs.bat
-./setup-ollama.sh
-./setup-ollama.bat
-./setup-openai.sh
-./setup-openai.bat
-./setup-local.sh
-./setup-local.bat
 
 
 

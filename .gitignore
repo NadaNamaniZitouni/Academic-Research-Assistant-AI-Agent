@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# FAISS
+*.idx
+
+# Data
+data/uploads/*
+data/indices/*
+data/metadata/*
+!data/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+node_modules/
+frontend/react-app/dist/
+frontend/react-app/.vite/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+#md files
+./DETAILED_IMPLEMENTATION_GUIDE.md
+./project_specs.md
+./project_steps.md
+./DOCKER.md
+./docker-compose.prod.yml
+./docker-compose.gpu.yml
+./docker-start.sh
+./docker-start.bat
+./docker-stop.sh
+./docker-stop.bat
+./docker-restart.sh
+./docker-restart.bat
+./docker-logs.sh
+./docker-logs.bat
+./setup-ollama.sh
+./setup-ollama.bat
+./setup-openai.sh
+./setup-openai.bat
+./setup-local.sh
+./setup-local.bat
+
+
+
+
+# .pdf files
+*.pdf
+
+# .txt files
+*.txt
+
+# .json files
+*.json

@@ -1,0 +1,83 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: academic-research-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - research-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: academic-research-backend
+    ports:
+      - "8010:8000"
+    volumes:
+      - ./data:/app/data
+      - ./backend:/app
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-mistral}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      - DB_PATH=/app/data/research_assistant.db
+      - FAISS_INDEX_PATH=/app/data/indices/faiss_index.idx
+      - METADATA_STORE_PATH=/app/data/metadata/chunks.jsonl
+      - UPLOAD_DIR=/app/data/uploads
+      - INDEX_DIR=/app/data/indices
+      - METADATA_DIR=/app/data/metadata
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:5173,http://localhost:8010
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - research-network
+
+  frontend:
+    build:
+      context: ./frontend/react-app
+      dockerfile: Dockerfile
+    container_name: academic-research-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/react-app:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8010
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - research-network
+
+networks:
+  research-network:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local
+  ollama_data:
+    driver: local
+

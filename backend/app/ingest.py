@@ -11,6 +11,7 @@ from .models import Document, ChunkMetadata
 from .database import SessionLocal
 from .embeddings import get_embedding_service
 from .faiss_index import get_faiss_index
+from .embedding_cache import get_embedding_cache
 
 
 def generate_doc_id() -> str:
@@ -25,11 +26,13 @@ def save_document_metadata(
     authors: str,
     year: int,
     doi: str,
-    path: str
+    path: str,
+    user_id: str = None
 ) -> Document:
     """Save document metadata to database"""
     doc = Document(
         doc_id=doc_id,
+        user_id=user_id,
         title=title,
         authors=authors,
         year=year,
@@ -45,7 +48,8 @@ def save_document_metadata(
 def ingest_pdf(
     pdf_path: Path,
     db: Session,
-    start_chunk_id: int = 0
+    start_chunk_id: int = 0,
+    user_id: str = None
 ) -> Dict:
     """
     Ingest a PDF file: extract text, chunk, and prepare for embedding.
@@ -101,7 +105,8 @@ def ingest_pdf(
         authors=pdf_metadata.get("authors") or "",
         year=pdf_metadata.get("year"),
         doi=pdf_metadata.get("doi") or "",
-        path=str(pdf_path)
+        path=str(pdf_path),
+        user_id=user_id
     )
 
     # Prepare chunks for storage
@@ -147,7 +152,8 @@ def ingest_pdf(
 def ingest_pdf_with_embeddings(
     pdf_path: Path,
     db: Session,
-    start_chunk_id: int = None
+    start_chunk_id: int = None,
+    user_id: str = None
 ) -> Dict:
     """
     Full ingestion pipeline: extract, chunk, embed, and index.
@@ -173,7 +179,7 @@ def ingest_pdf_with_embeddings(
         raise RuntimeError(f"Failed to initialize FAISS index: {str(e)}")
 
     # Step 2: Ingest PDF (extract, chunk, save metadata)
-    result = ingest_pdf(pdf_path, db, start_chunk_id)
+    result = ingest_pdf(pdf_path, db, start_chunk_id, user_id=user_id)
 
     # Step 3: Generate embeddings
     print(f"Step 5: Generating embeddings for {len(result['chunks'])} chunks...")
@@ -199,6 +205,19 @@ def ingest_pdf_with_embeddings(
         import traceback
         print(traceback.format_exc())
         raise RuntimeError(f"Failed to add vectors to FAISS index: {str(e)}")
+    
+    # Step 4b: Add to embedding cache (replace existing if same chunk_id)
+    print(f"Step 6b: Adding embeddings to cache...")
+    try:
+        embedding_cache = get_embedding_cache()
+        chunk_ids = [chunk["chunk_id"] for chunk in result["chunks"]]
+        embedding_cache.add_embeddings(chunk_ids, embeddings, replace_existing=True)
+        print(f"Added/updated {len(embeddings)} embeddings to cache. Cache size: {embedding_cache.size()}")
+    except Exception as e:
+        print(f"Warning: Error adding embeddings to cache: {e}")
+        import traceback
+        print(traceback.format_exc())
+        # Don't fail the whole ingestion if cache fails
 
     # Step 5: Save FAISS index
     print(f"Step 7: Saving FAISS index to disk...")

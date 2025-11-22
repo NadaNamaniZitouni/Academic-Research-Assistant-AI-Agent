@@ -1,11 +1,88 @@
 import { useState } from 'react';
-import { query, getChunk } from '../services/api';
+import { query, getChunk, exportMarkdown, exportText } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
-const QueryInterface = () => {
+const ExportButton = ({ format, results, question, onError }) => {
+  const { user } = useAuth();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!user) {
+      alert('Please log in to export');
+      return;
+    }
+
+    // Check if user has export access (starter, pro, team tiers)
+    const canExport = ['starter', 'pro', 'team'].includes(user.tier);
+    if (!canExport) {
+      alert('Export feature is only available in Starter, Pro, or Team plans. Please upgrade your account.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      let blob;
+      let filename;
+      let mimeType;
+
+      if (format === 'markdown') {
+        blob = await exportMarkdown(results, question);
+        filename = `query_result_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.md`;
+        mimeType = 'text/markdown';
+      } else if (format === 'text') {
+        blob = await exportText(results, question);
+        filename = `query_result_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+        mimeType = 'text/plain';
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([blob], { type: mimeType }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || error.message || 'Export failed';
+      if (onError) {
+        onError(errorMsg);
+      } else {
+        alert('Export failed: ' + errorMsg);
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      style={{
+        padding: '0.5rem 1rem',
+        background: 'var(--accent-color, #6366f1)',
+        border: 'none',
+        borderRadius: '6px',
+        color: 'white',
+        cursor: 'pointer',
+        fontSize: '0.85rem',
+        fontWeight: 500
+      }}
+      title={`Export as ${format.toUpperCase()}`}
+    >
+      {exporting ? 'Exporting...' : `Export ${format.toUpperCase()}`}
+    </button>
+  );
+};
+
+const QueryInterface = ({ docId = null }) => {
   const [queryText, setQueryText] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [expandedChunks, setExpandedChunks] = useState(new Set());
+  const [searchAllDocs, setSearchAllDocs] = useState(false); // Toggle to search all docs
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,7 +90,10 @@ const QueryInterface = () => {
 
     setLoading(true);
     try {
-      const response = await query(queryText);
+      // Use docId if available and not searching all documents
+      const queryDocId = (searchAllDocs || !docId) ? null : docId;
+      console.log('[QueryInterface] Querying with docId:', queryDocId, 'searchAllDocs:', searchAllDocs);
+      const response = await query(queryText, undefined, queryDocId);
       setResults(response);
     } catch (error) {
       // Extract error message from axios response
@@ -70,7 +150,23 @@ const QueryInterface = () => {
       {results && (
         <div className="results">
           <div className="answer-section">
-            <h3>Answer</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3>Answer</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <ExportButton
+                  format="markdown"
+                  results={results}
+                  question={queryText}
+                  onError={(error) => alert('Export failed: ' + error)}
+                />
+                <ExportButton
+                  format="text"
+                  results={results}
+                  question={queryText}
+                  onError={(error) => alert('Export failed: ' + error)}
+                />
+              </div>
+            </div>
             <div className="answer-text">{results.answer}</div>
           </div>
 

@@ -1,45 +1,69 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Dict
+from datetime import datetime
 
 
 class QueryRequest(BaseModel):
     query: str
-    k: int = 8  # Default to 8 chunks for better context coverage
+    k: int = 12  # Default to 12 chunks after hybrid retrieval (reranking + diversity)
+    doc_id: Optional[str] = None  # Optional: filter to specific document (None = search all documents)
 
 
-class SourceResponse(BaseModel):
-    chunk_id: int
-    doc_id: str
-    doc_title: str
-    page_range: str
-    snippet: str
-    similarity_score: float
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    full_name: Optional[str] = None
 
 
-class RelatedPaperResponse(BaseModel):
-    doc_id: str
-    title: str
-    authors: Optional[str]
-    year: Optional[int]
-    doi: Optional[str]
-    relevance_score: float
-    matching_chunks: int
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
 
-class GapResponse(BaseModel):
-    description: str
-    suggestions: List[str]
+class UserResponse(BaseModel):
+    user_id: str
+    email: str
+    username: str
+    full_name: Optional[str]
+    tier: str
+    is_premium: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class QueryResponse(BaseModel):
-    answer: str
-    sources: List[SourceResponse]
-    related_papers: List[RelatedPaperResponse]
-    gaps: List[GapResponse]
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
 
 
-class UploadResponse(BaseModel):
-    doc_id: str
-    status: str
-    num_chunks: int
+class UsageStats(BaseModel):
+    user_id: str
+    tier: str
+    documents_count: int
+    queries_this_month: int
+    queries_limit: int
+    documents_limit: int
+    can_export: bool
+    can_use_api: bool
 
+
+class ExportBibTeXRequest(BaseModel):
+    doc_ids: List[str]
+
+
+class ExportQueryRequest(BaseModel):
+    query_result: Dict
+    question: str
+
+
+class DocumentComparisonRequest(BaseModel):
+    doc_ids: List[str]
+
+
+class CitationNetworkRequest(BaseModel):
+    doc_ids: List[str] = []
+    similarity_threshold: float = 0.7

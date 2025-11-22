@@ -1,24 +1,59 @@
 # Academic Research Assistant AI Agent
 
-An intelligent research assistant that ingests academic PDFs, performs RAG (Retrieval-Augmented Generation) queries, and suggests related literature and research gaps.
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18+-61dafb.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-## Features
+An intelligent research assistant that ingests academic PDFs, performs RAG (Retrieval-Augmented Generation) queries, and suggests related literature and research gaps. Built with modern technologies for production-ready deployment.
 
-- 📄 **PDF Ingestion**: Extract text and metadata from academic PDFs
-- 🔍 **Semantic Search**: FAISS-based vector search for relevant content
-- 💬 **RAG Queries**: Generate citation-aware answers using LLMs
-- 📚 **Related Literature**: Suggest related papers based on queries
-- 🔬 **Research Gaps**: Identify research gaps and suggest approaches
-- 🎨 **Modern UI**: React-based frontend for easy interaction
+## ✨ Features
 
-## Architecture
+### Core Functionality
+- 📄 **PDF Ingestion**: Extract text and metadata from academic PDFs with automatic chunking
+- 🔍 **Semantic Search**: FAISS-based vector search with hybrid retrieval (reranking + MMR diversity)
+- 💬 **RAG Queries**: Generate citation-aware answers using multiple LLM providers
+- 📚 **Related Literature**: Suggest related papers based on semantic similarity
+- 🔬 **Research Gaps**: Identify research gaps and suggest methodological approaches
 
+### Advanced Features
+- 🔐 **User Authentication**: JWT-based authentication with tier-based access control
+- 📊 **Analytics Dashboard**: Track queries, response times, and document usage
+- 📤 **Export Capabilities**: Export answers as Markdown, Text, or BibTeX citations
+- 🎯 **Multi-LLM Support**: OpenAI, Ollama (Mistral), SambaNova, Gemini
+- 🚀 **Production Ready**: Docker containerization, rate limiting, error handling
+- 🎨 **Modern UI**: Responsive React frontend with dark theme
+
+## 🏗️ Architecture
+
+### Tech Stack
 - **Backend**: FastAPI with Python 3.10+
-- **Vector DB**: FAISS for semantic search
+- **Vector DB**: FAISS for semantic search with embedding cache
 - **Embeddings**: SentenceTransformers (all-MiniLM-L6-v2)
-- **LLM**: Configurable (OpenAI, Ollama, or local transformers)
-- **Frontend**: React with Vite
+- **LLM**: Configurable providers (OpenAI, Ollama/Mistral, SambaNova, Gemini)
+- **Frontend**: React 18+ with Vite
 - **Database**: SQLite for metadata storage
+- **Authentication**: JWT with bcrypt password hashing
+- **Containerization**: Docker & Docker Compose
+
+### System Architecture
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   React     │────▶│   FastAPI     │────▶│   FAISS     │
+│  Frontend   │     │   Backend     │     │  Vector DB  │
+└─────────────┘     └──────────────┘     └─────────────┘
+                            │
+                            ├──▶ SQLite (Metadata)
+                            ├──▶ Embedding Cache
+                            └──▶ LLM Providers
+```
+
+### Key Components
+- **RAG Pipeline**: Hybrid retrieval with FAISS → Reranking → MMR diversity selection
+- **Embedding Cache**: In-memory and disk-persisted cache for fast reranking
+- **User Management**: Tier-based access control (Free, Starter, Pro, Team)
+- **Analytics**: Query tracking, usage statistics, performance metrics
 
 ## Quick Start
 
@@ -45,13 +80,28 @@ docker-compose up --build
 ```
 
 This will start:
-- **Backend** at http://localhost:8001
+- **Backend** at http://localhost:8010
 - **Frontend** at http://localhost:5173
+- **Ollama** (if using Ollama provider) at http://localhost:11434
 
 **Note**: Create a `.env` file in the root directory with your configuration:
 ```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
+# LLM Configuration
+LLM_PROVIDER=ollama  # or "openai", "sambanova", "gemini"
+LLM_MODEL_NAME=mistral  # Model name for Ollama
+OLLAMA_BASE_URL=http://ollama:11434
+
+# For OpenAI
+# OPENAI_API_KEY=your_key_here
+
+# For SambaNova
+# SAMBANOVA_API_KEY=your_key_here
+
+# For Gemini
+# GEMINI_API_KEY=your_key_here
+
+# JWT Secret (change in production!)
+JWT_SECRET_KEY=your-secret-key-change-in-production
 ```
 
 To stop all services:
@@ -146,15 +196,45 @@ VITE_API_URL=http://localhost:8001
 - Click "Show More" on any source to see the full chunk
 - Review similarity scores to assess relevance
 
-## API Endpoints
+## 📡 API Endpoints
 
-- `POST /upload` - Upload and ingest a PDF
+### Authentication
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login and get JWT token
+- `POST /auth/login-json` - Login using JSON (alternative)
+- `GET /auth/me` - Get current user information
+- `GET /auth/usage` - Get usage statistics
+
+### Document Management
+- `POST /upload` - Upload and ingest a PDF (requires auth)
 - `GET /ingest/status/{doc_id}` - Check ingestion status
-- `POST /query` - Query the RAG system
 - `GET /doc/{doc_id}/chunks/{chunk_id}` - Get a specific chunk
 - `GET /search-metadata?q=...` - Search document metadata
 
-**Note**: Backend runs on port 8001 (not 8000) to avoid conflicts.
+### Query & RAG
+- `POST /query` - Query the RAG system (requires auth)
+  ```json
+  {
+    "query": "Your research question",
+    "k": 12,
+    "doc_id": "optional-document-id"
+  }
+  ```
+
+### Analytics
+- `GET /analytics/queries?days=30` - Get query analytics
+- `GET /analytics/stats` - Get user statistics
+
+### Export
+- `POST /export/bibtex` - Export documents as BibTeX (requires paid tier)
+- `POST /export/markdown` - Export query result as Markdown (requires paid tier)
+- `POST /export/text` - Export query result as plain text (requires paid tier)
+
+### API Documentation
+- **Swagger UI**: http://localhost:8010/docs
+- **ReDoc**: http://localhost:8010/redoc
+
+**Note**: Backend runs on port 8010. Most endpoints require authentication.
 
 ## Project Structure
 
@@ -243,12 +323,73 @@ docker-compose -f docker-compose.prod.yml up --build -d
 - Adjust chunk_size and overlap based on your documents
 - Use smaller LLM models for faster inference
 
-## License
+## 🧪 Testing
 
-MIT
+```bash
+# Run backend tests
+cd backend
+pytest
 
-## Acknowledgments
+# Run with coverage
+pytest --cov=app --cov-report=html
+```
 
-- Built with FastAPI, LangChain, and React
-- Uses SentenceTransformers for embeddings
-- FAISS for vector search
+## 📊 Usage Statistics
+
+The system tracks:
+- Total queries per user
+- Monthly query usage
+- Document count per user
+- Response time metrics
+- Most asked questions
+- Document query frequency
+
+Access analytics via the dashboard in the frontend or `/analytics/queries` endpoint.
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Rate limiting on API endpoints
+- Tier-based access control
+- User-specific document isolation
+- Input validation and sanitization
+
+## 🚀 Deployment
+
+### Production Considerations
+1. Set strong `JWT_SECRET_KEY` in environment variables
+2. Use PostgreSQL instead of SQLite for production
+3. Configure proper CORS origins
+4. Set up SSL/TLS certificates
+5. Use environment-specific configuration
+6. Enable logging and monitoring
+7. Set up backup strategies for database and indices
+
+### Docker Production
+```bash
+docker-compose -f docker-compose.prod.yml up --build -d
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+## 🙏 Acknowledgments
+
+- Built with [FastAPI](https://fastapi.tiangolo.com/), [LangChain](https://www.langchain.com/), and [React](https://reactjs.org/)
+- Uses [SentenceTransformers](https://www.sbert.net/) for embeddings
+- [FAISS](https://github.com/facebookresearch/faiss) for vector search
+- [Ollama](https://ollama.ai/) for local LLM inference
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub.
+
+---
+
+**Made with ❤️ for researchers and academics**

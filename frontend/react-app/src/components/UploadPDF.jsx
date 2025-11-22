@@ -66,9 +66,9 @@ const UploadPDF = ({ onUploadComplete }) => {
         setStatus('Completed');
         setUploadProgress(0);
         alert(`PDF processed successfully! Created ${result.num_chunks} chunks.`);
-        // Notify parent component that upload is complete
+        // Notify parent component that upload is complete with doc_id
         if (onUploadComplete) {
-          onUploadComplete();
+          onUploadComplete(result.doc_id);
         }
       } else {
         // Fallback: poll for status (for backwards compatibility)
@@ -81,9 +81,9 @@ const UploadPDF = ({ onUploadComplete }) => {
             if (statusResult.status === 'completed') {
               setUploading(false);
               alert('PDF processed successfully!');
-              // Notify parent component that upload is complete
+              // Notify parent component that upload is complete with doc_id
               if (onUploadComplete) {
-                onUploadComplete();
+                onUploadComplete(result.doc_id);
               }
             } else if (statusResult.status === 'failed') {
               setUploading(false);

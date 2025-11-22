@@ -2,6 +2,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 from .faiss_index import get_faiss_index, FAISSIndex
 from .embeddings import get_embedding_service
+from .embedding_cache import get_embedding_cache
 from .models import ChunkMetadata
 import os
 
@@ -35,10 +36,22 @@ def rebuild_index_from_database(db: Session):
     new_index = FAISSIndex(dimension=embedding_service.dimension, index_path=index_path)
     new_index.add_vectors(embeddings)
     new_index.save()
+    
+    # Rebuild embedding cache (clear and rebuild from scratch)
+    try:
+        embedding_cache = get_embedding_cache()
+        # Clear existing cache to avoid conflicts
+        embedding_cache.clear()
+        chunk_ids = [chunk.chunk_id for chunk in chunks]
+        embedding_cache.add_embeddings(chunk_ids, embeddings, replace_existing=True)
+        print(f"Rebuilt embedding cache with {len(chunks)} embeddings")
+    except Exception as e:
+        print(f"Warning: Could not rebuild embedding cache: {e}")
 
     return {
         "status": "success",
         "chunks_indexed": len(chunks),
-        "index_path": index_path
+        "index_path": index_path,
+        "cache_size": get_embedding_cache().size()
     }
 

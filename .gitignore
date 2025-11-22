@@ -10,62 +10,198 @@ ENV/
 *.egg-info/
 dist/
 build/
+*.egg
 
-# Environment
+# Environment & Secrets
 .env
 .env.local
+.env.*.local
+*.key
+*.pem
+*.cert
+secrets/
+credentials/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
 
-# FAISS
+# FAISS & Vector Indices
 *.idx
-
-# Data
-data/uploads/*
+*.index
 data/indices/*
+
+# Embedding Cache (contains user data)
+*.npy
+data/indices/embeddings_cache.*
+data/indices/*.npy
+# Allow .gitkeep but ignore other JSON in indices
+data/indices/*.json
+!data/indices/.gitkeep
+*.pkl
+*.pickle
+
+# User Uploads & Data
+data/uploads/*
+!data/uploads/.gitkeep
 data/metadata/*
 !data/.gitkeep
+uploads/
+documents/
+
+# Logs
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache & Temporary Files
+.cache/
+*.cache
+.tmp/
+tmp/
+*.tmp
+*.swp
+*.swo
+*~
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # Frontend
 node_modules/
 frontend/react-app/dist/
 frontend/react-app/.vite/
+frontend/react-app/build/
+.npm
+.eslintcache
+*.tsbuildinfo
 
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 *.cover
+.tox/
+.hypothesis/
+test-results/
+coverage/
 
-#md files
-./DETAILED_IMPLEMENTATION_GUIDE.md
-./project_specs.md
-./project_steps.md
-./DOCKER.md
-./docker-compose.prod.yml
-./docker-compose.gpu.yml
+# Docker
+docker-compose.override.yml
+.dockerignore.local
 
+# Build Artifacts
+*.war
+*.jar
+*.class
+target/
+out/
+bin/
 
+# Internal Documentation (keep public docs, hide internal)
+DETAILED_IMPLEMENTATION_GUIDE.md
+project_specs.md
+project_steps.md
+DOCKER.md
+docker-compose.prod.yml
+docker-compose.gpu.yml
+COST_EFFECTIVE_MULTI_AGENT_APPROACH.md
+GITHUB_SHOWCASE_AND_MONETIZATION_STRATEGY.md
+PRE_PUSH_CHECKLIST.md
 
-
-# .pdf files
+# User Content (PDFs, documents)
 *.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
 
-# .txt files
+# Text files (may contain user data)
 *.txt
+!README.txt
+!LICENSE.txt
+!CHANGELOG.txt
 
-# .json files
+# JSON files (may contain user data or config)
 *.json
+# But keep essential config files
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
+!composer.json
+!*.example.json
+!.vscode/settings.json
+!.github/**/*.json
+!data/indices/.gitkeep
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Local development scripts (may contain paths)
+setup.bat
+setup.sh
+docker-start.bat
+docker-start.sh
+setup-ollama.bat
+setup-ollama.sh
+
+# Jupyter Notebooks (if any)
+.ipynb_checkpoints/
+*.ipynb
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Windows
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Archives (unless needed)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Compiled files
+*.com
+*.exe
+*.dll
+*.dylib
+*.so.*

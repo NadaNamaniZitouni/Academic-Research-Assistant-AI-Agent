@@ -42,10 +42,9 @@ def answer_with_rag(
     if not chunks:
         return "No relevant content found in the uploaded documents to answer this question."
 
-    # Format context with reasonable limits to balance quality and speed
-    # Use top 8 chunks and allow up to 800 chars per chunk for comprehensive context
-    limited_chunks = chunks[:8]  # Use top 8 chunks for better coverage
-    context = format_context_for_llm(chunks, max_chunk_length=800)
+    # Format context - chunks are already selected and ranked by hybrid retrieval
+    # Use full chunks (no length limit) for complete context
+    context = format_context_for_llm(chunks, max_chunk_length=None)
 
     # Create optimized prompt for better responses
     prompt_template = PromptTemplate(
@@ -123,17 +122,41 @@ ANSWER:
 def full_rag_pipeline(
     question: str,
     db: Session,
-    k: int = 8
+    k: int = 12,
+    initial_k: int = 25,
+    use_reranking: bool = True,
+    use_diversity: bool = True,
+    doc_id: str = None
 ) -> Dict:
     """
     Complete RAG pipeline: retrieve, answer, find related papers, identify gaps.
+    
+    Uses hybrid retrieval: FAISS → Reranking → MMR Diversity → Final selection
+
+    Args:
+        question: User question
+        db: Database session
+        k: Final number of chunks to use (default: 12)
+        initial_k: Initial FAISS retrieval count (default: 25)
+        use_reranking: Enable embedding-based reranking (default: True)
+        use_diversity: Enable MMR diversity selection (default: True)
+        doc_id: Optional document ID to filter by (None = search all documents, single doc_id = only that document)
 
     Returns:
         Dict with answer, sources, related_papers, gaps
     """
-    # Step 1: Retrieve relevant chunks
+    # Step 1: Retrieve relevant chunks using hybrid approach
     try:
-        chunks = retrieve_chunks(question, db, k=k)
+        chunks = retrieve_chunks(
+            question, 
+            db, 
+            k=k,
+            initial_k=initial_k,
+            use_reranking=use_reranking,
+            use_diversity=use_diversity,
+            final_k=k,
+            doc_id=doc_id  # Pass doc_id to filter chunks
+        )
     except ValueError as e:
         # Re-raise with more context
         raise ValueError(str(e))

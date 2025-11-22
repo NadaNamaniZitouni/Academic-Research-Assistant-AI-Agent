@@ -121,16 +121,20 @@ target/
 out/
 bin/
 
-# Internal Documentation (keep public docs, hide internal)
-DETAILED_IMPLEMENTATION_GUIDE.md
+# Markdown files (keep only README.md)
+*.md
+!README.md
 project_specs.md
 project_steps.md
 DOCKER.md
-docker-compose.prod.yml
-docker-compose.gpu.yml
 COST_EFFECTIVE_MULTI_AGENT_APPROACH.md
 GITHUB_SHOWCASE_AND_MONETIZATION_STRATEGY.md
 PRE_PUSH_CHECKLIST.md
+# Docker Compose production/GPU configs
+docker-compose.prod.yml
+docker-compose.gpu.yml
+dockerfile.gpu.yml
+dockerfile.prod.yml
 
 # User Content (PDFs, documents)
 *.pdf
